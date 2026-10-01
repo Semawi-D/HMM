@@ -1,0 +1,11 @@
+HMM.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.vscode/
+.env
+*.csv
+*.xlsx
+*.log
