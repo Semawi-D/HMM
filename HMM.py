@@ -47,8 +47,28 @@ model = GaussianHMM(n_components = 3, random_state = 42, n_iter = 1000, covarian
 model.fit(X_scaled)
 states = model.predict(X_scaled)
 X["state"] = states
-print(X.head())
-print(X.shape)
 print(X.groupby("state").mean())
-print(model.transmat_.round(3))
+#STATE 0 = High Vol Bull/Calm
+#STATE 1 = Bull/Calm
+#STATE 2 = Bear/Stress
+probs =  model.predict_proba(X_scaled)[-1]
+todays_prob = probs.max().round(3)
+if probs.argmax() == 0:
+ print("Today's state is: High Vol BULL ", todays_prob)
+elif probs.argmax() == 1:
+ print("Today's state is: BULL ", todays_prob)
+elif probs.argmax() == 2:
+ print("Today's state is: Bear ", todays_prob)
+print("Today's regime probablities: ", probs.round(3))
+
+tomorrows_probs = probs @ model.transmat_
+tomorrows_prob = tomorrows_probs.max().round(3)
+if tomorrows_probs.argmax() == 0:
+ print("Tomorrow's state is: High Vol BULL ", tomorrows_prob)
+elif tomorrows_probs.argmax() == 1:
+ print("Tomorrow's state is: BULL ", tomorrows_prob)
+elif tomorrows_probs.argmax() == 2:
+ print("Tomorrow's state is: Bear ", tomorrows_prob)
+print("Tomorrow's regime probablities: ", tomorrows_probs.round(3))
+
 
