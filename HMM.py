@@ -70,19 +70,21 @@ names = {order[0]: "CALM", order[1]: "TRANSITION", order[2]: "STRESS"}
 #Prediction
 state = model.predict(features_scaled)
 todays_state = state[-1]
-todays_state_name = names[todays_state]
+regime = names[todays_state]
 
 probs =  model.predict_proba(features_scaled)
 todays_probs = probs[-1]
 todays_probs = (todays_probs.round(3))*100
 
 tomorrows_probs = probs @ model.transmat_
+regime_days = 1/(1-tomorrows_probs.max())
 tomorrows_probs = tomorrows_probs.round(3)*100
-
 print("   ")
-print(f"N.B!! For the regieme probabilities below, CALM index = {order[0]}, TRANSITION index = {order[1]}, STRESS index = {order[2]}")
+print(f"N.B!! For the regime probabilities below, CALM-index = {order[0]}, TRANSITION-index = {order[1]}, STRESS-index = {order[2]}.")
+print(f"N.B!! The model doesn't know how many days the market has been in the current regime.")
 print("   ")
-print(f"Today's state is {todays_state_name}, with a probability of {todays_probs.max()}%.")
-print(f"Today's Regieme probabilities are {todays_probs}.")
-print(f"Tomorrow's Regieme probabilities are {tomorrows_probs[-1]}.")
+print(f"Today's regime is {regime}, with a probability of {todays_probs.max()}%.")
+print(f"The market might stay in this regime for {regime_days.round(1)} days.")
+print(f"Today's Regime probabilities are {todays_probs}.")
+print(f"Tomorrow's Regime probabilities are {tomorrows_probs[-1]}.")
 
