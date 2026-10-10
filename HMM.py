@@ -1,3 +1,4 @@
+#Importing the libraries
 import yfinance as yf
 import numpy as np
 import pandas as pd
@@ -6,69 +7,82 @@ from hmmlearn.hmm import GaussianHMM
 
 
 # Importing the Data
-tickers = ["SPY", "QQQ", "TLT", "GLD"]
-etf = yf.download(tickers, start="2010-01-01", auto_adjust = True)
-vix = yf.download("^VIX", start="2010-01-01")
-dxy = yf.download("DX-Y.NYB", start="2010-01-01")
+tickers = ["SPY", "QQQ", "TLT", "GLD", "^VIX", "DX-Y.NYB"]
+raw_data = yf.download(tickers, start="2010-01-01", auto_adjust = True)
+
+data_close = raw_data["Close"]
+data_close = data_close[data_close["SPY"].notna()]
+data_close = data_close.ffill().dropna()
+
 
 # Creating the Features/Columns
-close = etf["Close"]
-returns = etf["Close"].pct_change()
+returns = np.log(data_close.drop(columns = "^VIX")).diff()
 
 spy_return = returns["SPY"]
-spy_vol = spy_return.rolling(20).std()
-spy_mom = close["SPY"].pct_change(60)
-
-qqq_return = returns["QQQ"]
-qqq_vol = qqq_return.rolling(20).std()
-qqq_mom = close["QQQ"].pct_change(60)
+spy_vol = spy_return.rolling(10).std()
+spy_mom = np.log(data_close["SPY"]).diff(30)
 
 tlt_return = returns["TLT"]
-tlt_vol = tlt_return.rolling(20).std()
-tlt_mom = close["TLT"].pct_change(60)
+tlt_vol = tlt_return.rolling(10).std()
+tlt_mom = np.log(data_close["QQQ"]).diff(30)
 
-dxy_return = dxy["Close"].pct_change()
-dxy_vol = dxy_return.rolling(20).std()
-dxy_mom = dxy["Close"].squeeze().pct_change(60)
+dxy_return = returns["DX-Y.NYB"]
+dxy_vol = dxy_return.rolling(10).std()
+dxy_mom = np.log(data_close["TLT"]).diff(30)
 
-vix_level = vix["Close"]
+gld_return = returns["GLD"]
+gld_vol = gld_return.rolling(10).std()
+gld_mom = np.log(data_close["GLD"]).diff(30)
+
+vix_level = np.log(data_close["^VIX"])
+
 
 # Creating a Matrix/Table
-X = pd.concat([spy_return, spy_vol, spy_mom, qqq_return, qqq_vol, qqq_mom, tlt_return, tlt_vol, tlt_mom, dxy_return, dxy_vol, dxy_mom, vix_level], axis = 1)
-X.columns = ["spy_return", "spy_vol", "spy_mom", "qqq_return", "qqq_vol", "qqq_mom", "tlt_return", "tlt_vol", "tlt_mom", "dxy_return", "dxy_vol", "dxy_mom", "vix_level"]
-X = X.dropna()
-print(X.head())
-print(X.shape)
+features = pd.DataFrame(index = data_close.index)
+features["spy_return"] = spy_return
+features["spy_vol"] = spy_vol
+features["spy_mom"] = spy_mom
+features["tlt_return"] = tlt_return
+features["tlt_vol"] = tlt_vol
+features["tlt_mom"] = tlt_mom
+features["dxy_return"] = dxy_return
+features["dxy_vol"] = dxy_vol
+features["dxy_mom"] = dxy_mom
+features["gld_return"] = gld_return
+features["gld_vol"] = gld_vol
+features["gld_mom"] = gld_mom
+features["vix_level"] = vix_level
+features = features.ffill().dropna()
 
-#Standardizing the Data/Matrix and training the Model
+
+#Standardizing the Matrix and training the Model
 scaler = StandardScaler()
-X_scaled = scaler.fit_transform(X)
+features_scaled = scaler.fit_transform(features)
+
 model = GaussianHMM(n_components = 3, random_state = 42, n_iter = 1000, covariance_type = "full")
-model.fit(X_scaled)
-states = model.predict(X_scaled)
-X["state"] = states
-print(X.groupby("state").mean())
-#STATE 0 = High Vol Bull/Calm
-#STATE 1 = Bull/Calm
-#STATE 2 = Bear/Stress
-probs =  model.predict_proba(X_scaled)[-1]
-todays_prob = probs.max().round(3)
-if probs.argmax() == 0:
- print("Today's state is: High Vol BULL ", todays_prob)
-elif probs.argmax() == 1:
- print("Today's state is: BULL ", todays_prob)
-elif probs.argmax() == 2:
- print("Today's state is: Bear ", todays_prob)
-print("Today's regime probablities: ", probs.round(3))
+model.fit(features_scaled)
+
+spy_vol_idx = list(features.columns).index("spy_vol")
+order = np.argsort(model.means_[:, spy_vol_idx])
+names = {order[0]: "CALM", order[1]: "TRANSITION", order[2]: "STRESS"}
+
+
+#Prediction
+state = model.predict(features_scaled)
+todays_state = state[-1]
+todays_state_name = names[todays_state]
+
+probs =  model.predict_proba(features_scaled)
+todays_probs = probs[-1]
+todays_probs = (todays_probs.round(3))*100
 
 tomorrows_probs = probs @ model.transmat_
-tomorrows_prob = tomorrows_probs.max().round(3)
-if tomorrows_probs.argmax() == 0:
- print("Tomorrow's state is: High Vol BULL ", tomorrows_prob)
-elif tomorrows_probs.argmax() == 1:
- print("Tomorrow's state is: BULL ", tomorrows_prob)
-elif tomorrows_probs.argmax() == 2:
- print("Tomorrow's state is: Bear ", tomorrows_prob)
-print("Tomorrow's regime probablities: ", tomorrows_probs.round(3))
+tomorrows_probs = tomorrows_probs.round(3)*100
 
+print("   ")
+print(f"N.B!! For the regieme probabilities below, CALM index = {order[0]}, TRANSITION index = {order[1]}, STRESS index = {order[2]}")
+print("   ")
+print(f"Today's state is {todays_state_name}, with a probability of {todays_probs.max()}%.")
+print(f"Today's Regieme probabilities are {todays_probs}.")
+print(f"Tomorrow's Regieme probabilities are {tomorrows_probs[-1]}.")
 
