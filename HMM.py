@@ -55,24 +55,30 @@ features["vix_level"] = vix_level
 features = features.ffill().dropna()
 
 
-#Standardizing the Matrix and training the Model
+#Trainig different models and chosing the best one
 scaler = StandardScaler()
 features_scaled = scaler.fit_transform(features)
 
-model = GaussianHMM(n_components = 3, random_state = 42, n_iter = 1000, covariance_type = "full")
-model.fit(features_scaled)
+best_score = -np.inf
+for seed in range (50):
+ model = GaussianHMM(n_components = 3, random_state = seed, n_iter = 1000, covariance_type = "full")
+ model.fit(features_scaled)
+ score = model.score(features_scaled)
+ if score > best_score:
+  best_score = score
+  best_model = model
 
 spy_vol_idx = list(features.columns).index("spy_vol")
-order = np.argsort(model.means_[:, spy_vol_idx])
+order = np.argsort(best_model.means_[:, spy_vol_idx])
 names = {order[0]: "CALM", order[1]: "TRANSITION", order[2]: "STRESS"}
 
 
 #Predictions
-state = model.predict(features_scaled)
+state = best_model.predict(features_scaled)
 todays_state = state[-1]
 regime = names[todays_state]
 
-probs =  model.predict_proba(features_scaled)
+probs =  best_model.predict_proba(features_scaled)
 todays_probs = probs[-1]
 todays_probs = (todays_probs.round(3))*100
 
@@ -83,9 +89,10 @@ features["states"] = state
 
 print("   ")
 print(f"N.B!! For the Regime probabilities below, CALM-index = {order[0]}, TRANSITION-index = {order[1]}, STRESS-index = {order[2]}.")
-print(f"N.B!! The model doesn't know how many days the market has been in the current regime.")
+print(f"N.B!! The model doesn't know how many days have passed in the current regime.")
 print("   ")
 print(f"Today's Regime is {regime}, with a probability of {todays_probs.max()}%.")
 print(f"This Regime might last for {regime_days.round(1)} days.")
 print(f"Today's Regime probabilities are {todays_probs}.")
 print(f"Tomorrow's Regime probabilities are {tomorrows_probs[-1]}.")
+print("  ")
