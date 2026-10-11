@@ -24,11 +24,11 @@ spy_mom = np.log(data_close["SPY"]).diff(30)
 
 tlt_return = returns["TLT"]
 tlt_vol = tlt_return.rolling(10).std()
-tlt_mom = np.log(data_close["QQQ"]).diff(30)
+tlt_mom = np.log(data_close["TLT"]).diff(30)
 
 dxy_return = returns["DX-Y.NYB"]
 dxy_vol = dxy_return.rolling(10).std()
-dxy_mom = np.log(data_close["TLT"]).diff(30)
+dxy_mom = np.log(data_close["DX-Y.NYB"]).diff(30)
 
 gld_return = returns["GLD"]
 gld_vol = gld_return.rolling(10).std()
@@ -67,7 +67,7 @@ order = np.argsort(model.means_[:, spy_vol_idx])
 names = {order[0]: "CALM", order[1]: "TRANSITION", order[2]: "STRESS"}
 
 
-#Prediction
+#Predictions
 state = model.predict(features_scaled)
 todays_state = state[-1]
 regime = names[todays_state]
@@ -79,12 +79,13 @@ todays_probs = (todays_probs.round(3))*100
 tomorrows_probs = probs @ model.transmat_
 regime_days = 1/(1-tomorrows_probs.max())
 tomorrows_probs = tomorrows_probs.round(3)*100
+features["states"] = state
+
 print("   ")
-print(f"N.B!! For the regime probabilities below, CALM-index = {order[0]}, TRANSITION-index = {order[1]}, STRESS-index = {order[2]}.")
+print(f"N.B!! For the Regime probabilities below, CALM-index = {order[0]}, TRANSITION-index = {order[1]}, STRESS-index = {order[2]}.")
 print(f"N.B!! The model doesn't know how many days the market has been in the current regime.")
 print("   ")
-print(f"Today's regime is {regime}, with a probability of {todays_probs.max()}%.")
-print(f"The market might stay in this regime for {regime_days.round(1)} days.")
+print(f"Today's Regime is {regime}, with a probability of {todays_probs.max()}%.")
+print(f"This Regime might last for {regime_days.round(1)} days.")
 print(f"Today's Regime probabilities are {todays_probs}.")
 print(f"Tomorrow's Regime probabilities are {tomorrows_probs[-1]}.")
-
