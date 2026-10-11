@@ -1,8 +1,10 @@
-For this model I used three features(Daily returns, 10-days Volatility & 30-days Momentum) of SPY, TLT, GLD and DXY and the VIX level.
+Please note that HMM models do not know how many days have passed in the current regime, meaning it could say this Regime may last for 60 days even though 59 days have already passed, so use that detail mindfully and as a rough estimate.
+
+For this model I used three features (Daily returns, 10-days Volatility & 30-days Momentum) of SPY, TLT, GLD and DXY and the VIX level.
 
 Below I wrote a brief explanation of what each regime indicates about each of the 13 features I mentioned.
 
-##STRESS Regime
+## STRESS Regime ##
 This regime represents periods of elevated market stress, fear, and uncertainty.
 
 SPY Return
@@ -15,7 +17,7 @@ SPY Momentum
 Market momentum is negative.
 
 TLT Return
-Treasuries tend to hold up relatively well.
+Treasury returns are positive but lower than the returns from the calm level.
 
 TLT Volatility
 Treasury volatility is at its highest level.
@@ -45,7 +47,7 @@ VIX Level
 The VIX reaches its highest level.
 
 
-##TRANSITION Regime
+## TRANSITION Regime ##
 This regime represents a middle ground between stress and calm conditions. Markets are generally improving, but uncertainty has not fully disappeared.
 
 SPY Return
@@ -70,7 +72,7 @@ DXY Return
 The Dollar remains positive but is no longer experiencing the strong gains observed during stress periods.
 
 DXY Volatility
-Dollar volatility moderates.
+Dollar volatility is relatively moderate from the other regimes.
 
 DXY Momentum
 Dollar momentum remains positive but weaker than during stress periods.
@@ -79,16 +81,16 @@ GLD Return
 Gold posts positive returns.
 
 GLD Volatility
-Gold volatility decreases noticeably from stress levels.
+Gold volatility noticeably decreases from the stress level.
 
 GLD Momentum
-Gold momentum remains positive but is considerably weaker than during stress periods.
+Gold momentum remains positive but is considerably weaker than during stress and calm periods.
 
 VIX Level
 The VIX falls from stress levels but remains above calm-market readings.
 
 
-##CALM Regime
+## CALM Regime ##
 This regime represents stable market conditions, lower uncertainty, and strong risk appetite.
 
 SPY Return
@@ -119,13 +121,13 @@ DXY Momentum
 Dollar momentum is at its weakest in regime.
 
 GLD Return
-Gold posts positive returns.
+Gold returns are the highest in this regime.
 
 GLD Volatility
 Gold volatility reaches its lowest level.
 
 GLD Momentum
-Gold momentum remains positive but is weaker than the STRESS regime.
+Gold momentum remains positive and strong, but not as strong as in the stress regime.
 
 VIX Level
 The VIX is at its lowest level.
