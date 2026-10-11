@@ -1,5 +1,7 @@
 This is a 3 state Gaussian HMM Regime Detection Model used for predicting the current market's regime (which is basically the hidden state of a market). It classifies the market into one of 3 regimes based on probabilities. These states/regimes are Calm, Transition, and Stress. FYI, these types of models are generally used to manage portfolios depending on the current, predicted regime.
 
+Please note that the model uses live data from yahoo finance, so there is no need for inputs, you just run it a couple of times a day before and after the market closes.
+
 Please note that HMM models are nowhere near perefect and we should use them mindfully. 
 
 Please note that HMM models do not know how many days have passed in the current regime, meaning it could say this Regime may last for 60 days even though 59 days have already passed, so use that detail mindfully and as a rough estimate.
